@@ -12,8 +12,8 @@ Simple Calc is a simple calcuator made with Java for Android 7.0 and forward, bu
 ## Screenshots
 
 <div display="flex">
-    <img src="/home/miles/AndroidStudioProjects/Mycalculator/docs/images/CalculatorScreenshot1.png" height="512" style="margin-right: 20px;">
-    <img src="/home/miles/AndroidStudioProjects/Mycalculator/docs/images/CalculatorScreenshot2.png" height="512">
+    <img src="./docs/images/CalculatorScreenshot1.png" height="512" style="margin-right: 20px;">
+    <img src="./docs/images/CalculatorScreenshot2.png" height="512">
 </div>
 
 ## License
