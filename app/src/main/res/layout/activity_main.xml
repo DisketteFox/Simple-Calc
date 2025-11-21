@@ -49,11 +49,6 @@
             app:layout_constraintStart_toStartOf="parent" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="409dp"
-        android:layout_height="wrap_content"
-        tools:layout_editor_absoluteX="1dp" />
-
     <TableLayout
         android:id="@+id/bottom"
         android:layout_width="409dp"

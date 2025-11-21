@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     MaterialButton buttonDivide, buttonMultiply, buttonPlus, buttonMinus, buttonEqual;
     MaterialButton button1, button2, button3, button4, button5, button6, button7, button8, button9, button0;
     MaterialButton buttonDot, buttonC;
-    Boolean ended;
+    Boolean ended, parentesis;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DynamicColors.applyToActivitiesIfAvailable(this.getApplication());
         setContentView(R.layout.activity_main);
         ended = false;
+        parentesis = false;
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resultTv = findViewById(R.id.result_tv);
 
         assignId(buttonAC, R.id.buttonAC);
+        assignId(buttonC, R.id.buttonC);
         assignId(buttonBrack, R.id.buttonBrack);
         assignId(buttonPercentage, R.id.buttonPercentage);
         assignId(buttonDivide, R.id.buttonDivide);
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         assignId(button8, R.id.button8);
         assignId(button9, R.id.button9);
         assignId(button0, R.id.button0);
-        assignId(buttonDot, R.id.buttonC);
+        assignId(buttonDot, R.id.buttonDot);
     }
 
     void assignId(MaterialButton btn, int id){
@@ -101,6 +103,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dataToCalculate += "/";
                 ended = false;
                 break;
+            case "( )":
+                if (!parentesis) {
+                    dataToCalculate += "(";
+                } else {
+                    dataToCalculate += ")";
+                }
+                ended = false;
+                break;
             default:
                 if (dataToCalculate.equals("0") | ended) {
                     dataToCalculate = "";
@@ -117,32 +127,97 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         double result = 0;
         double currentNumber = 0;
         char operator = '+';
+        double labelulle = 0; // For managing percentages
+        boolean decimalFlag = false; // For decimals
+        int decimalPlace = 1; // To handle decimal places
+        boolean isNegative = false; // For negative numbers
 
         for (int i = 0; i < data.length(); i++) {
             char current = data.charAt(i);
 
+            // Handling digits
             if (Character.isDigit(current)) {
-                currentNumber = currentNumber * 10 + (current - '0');
+                if (decimalFlag) {
+                    currentNumber += (current - '0') / (double) (decimalPlace *= 10);
+                } else {
+                    currentNumber = currentNumber * 10 + (current - '0');
+                }
+            }
+
+            // Handle decimal point
+            if (current == '.') {
+                decimalFlag = true;
+                continue;
+            }
+
+            // Handle negative sign
+            if (current == '-') {
+                isNegative = true;
             }
 
             if (!Character.isDigit(current) && current != ' ' || i == data.length() - 1) {
-                if (operator == '*') {
-                    result *= currentNumber;
-                } else if (operator == '/') {
-                    if (currentNumber != 0) {
-                        result /= currentNumber;
-                    } else {
-                        return "Can't divide by zero";
-                    }
-                } else if (operator == '+') {
-                    result += currentNumber;
-                } else if (operator == '-') {
-                    result -= currentNumber;
+                if (isNegative) {
+                    currentNumber = -currentNumber; // Apply negative sign
+                    isNegative = false; // Reset negative flag
                 }
-                operator = current;
-                currentNumber = 0;
+
+                // Perform calculations based on the operator
+                switch (operator) {
+                    case '*':
+                        result *= currentNumber;
+                        break;
+                    case '/':
+                        if (currentNumber != 0) {
+                            result /= currentNumber;
+                        } else {
+                            return "Can't divide by zero";
+                        }
+                        break;
+                    case '+':
+                        result += currentNumber;
+                        break;
+                    case '-':
+                        result -= currentNumber;
+                        break;
+                    case '%':
+                        if (currentNumber > 0) {
+                            result += result * (currentNumber / 100);
+                        }
+                        break;
+                }
+
+                operator = current; // Update operator for next operation
+                currentNumber = 0; // Reset current number
+                decimalFlag = false; // Reset decimal flag
+                decimalPlace = 1; // Reset decimal place counter
             }
         }
+
+        // Finally process any remaining operation
+        switch (operator) {
+            case '*':
+                result *= currentNumber;
+                break;
+            case '/':
+                if (currentNumber != 0) {
+                    result /= currentNumber;
+                } else {
+                    return "Can't divide by zero";
+                }
+                break;
+            case '+':
+                result += currentNumber;
+                break;
+            case '-':
+                result -= currentNumber;
+                break;
+            case '%':
+                if (currentNumber > 0) {
+                    result += result * (currentNumber / 100);
+                }
+                break;
+        }
+
         return (result % 1 == 0) ? String.valueOf((int) result) : String.valueOf(result);
     }
 }
