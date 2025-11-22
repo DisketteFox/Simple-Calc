@@ -13,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.DynamicColors;
 
+import net.objecthunter.exp4j.ExpressionBuilder;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     TextView resultTv;
@@ -84,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     dataToCalculate += ")";
                     parentesis = false;
                 }
-                resultTv.setText(getResult(dataToCalculate));
+                resultTv.setText((String.valueOf(evalueExpresion(dataToCalculate))));
                 ended = true;
                 return;
             case "C":
@@ -140,75 +142,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resultTv.setText(dataToCalculate);
     }
 
-    public String getResult(String data) {
-        while (data.contains("(")) {
-            int startIndex = data.lastIndexOf("(");
-            int endIndex = data.indexOf(")", startIndex);
-            if (endIndex == -1) {
-                throw new IllegalArgumentException("Unmatched parentheses in expression");
+    private double evalueExpresion(String expresion){
+        try {
+            double resultado = new ExpressionBuilder(expresion).build().evaluate();
+            if (Double.isNaN(resultado)) {
+                throw new ArithmeticException("division entre cero o invalida expresionb");
             }
-
-            String subExpression = data.substring(startIndex + 1, endIndex);
-            double subResult = evaluateExpression(subExpression);
-            data = data.substring(0, startIndex) + subResult + data.substring(endIndex + 1);
-        }
-
-        double finalResult = evaluateExpression(data);
-        return (finalResult % 1 == 0) ? String.valueOf((int) finalResult) : String.valueOf(finalResult);
-    }
-
-    private double evaluateExpression(String expression) {
-        double result = 0;
-        double currentNumber = 0;
-        char operator = '+';
-        boolean decimalFlag = false;
-        int decimalPlace = 1;
-        boolean isNegative = false;
-
-        for (int i = 0; i < expression.length(); i++) {
-            char current = expression.charAt(i);
-
-            if (Character.isDigit(current)) {
-                if (decimalFlag) {
-                    currentNumber += (current - '0') / (double) (decimalPlace *= 10);
-                } else {
-                    currentNumber = currentNumber * 10 + (current - '0');
-                }
-            } else if (current == '.') {
-                decimalFlag = true;
-            } else if (current == '-') {
-                isNegative = true;
-            } else if (!Character.isWhitespace(current)) {
-                if (isNegative) {
-                    currentNumber = -currentNumber;
-                    isNegative = false;
-                }
-                result = performOperation(result, currentNumber, operator);
-                operator = current;
-                currentNumber = 0;
-                decimalFlag = false;
-                decimalPlace = 1;
-            }
-        }
-
-        result = performOperation(result, currentNumber, operator);
-        return result;
-    }
-
-    private double performOperation(double left, double right, char operator) {
-        switch (operator) {
-            case '+':
-                return left + right;
-            case '-':
-                return left - right;
-            case '*':
-                return left * right;
-            case '/':
-                return left / right;
-            case '%':
-                return left * (right / 100);
-            default:
-                return right;
+            return resultado;
+        }catch (Exception e){
+            e.printStackTrace();
+            return Double.NaN;
         }
     }
 }
