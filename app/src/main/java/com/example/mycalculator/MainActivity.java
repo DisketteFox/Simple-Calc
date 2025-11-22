@@ -74,13 +74,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         switch (buttonText) {
             case "AC":
+                if (parentesis) {
+                    parentesis = false;
+                }
                 resultTv.setText("0");
                 return;
             case "=":
+                if (parentesis) {
+                    dataToCalculate += ")";
+                    parentesis = false;
+                }
                 resultTv.setText(getResult(dataToCalculate));
                 ended = true;
                 return;
             case "C":
+                char openParenthesis = '(';
+                char closeParenthesis = ')';
+
+                if (dataToCalculate.charAt(dataToCalculate.length() - 1) == openParenthesis) {
+                    parentesis = false;
+                } else if (dataToCalculate.charAt(dataToCalculate.length() - 1) == closeParenthesis) {
+                    parentesis = true;
+                }
                 if (dataToCalculate.length() > 1){
                     dataToCalculate = dataToCalculate.substring(0, dataToCalculate.length() - 1);
                 } else {
@@ -103,11 +118,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dataToCalculate += "/";
                 ended = false;
                 break;
-            case "( )":
+            case "(  )":
                 if (!parentesis) {
                     dataToCalculate += "(";
+                    parentesis = true;
                 } else {
                     dataToCalculate += ")";
+                    parentesis = false;
                 }
                 ended = false;
                 break;
@@ -124,100 +141,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public String getResult(String data) {
+        while (data.contains("(")) {
+            int startIndex = data.lastIndexOf("(");
+            int endIndex = data.indexOf(")", startIndex);
+            if (endIndex == -1) {
+                throw new IllegalArgumentException("Unmatched parentheses in expression");
+            }
+
+            String subExpression = data.substring(startIndex + 1, endIndex);
+            double subResult = evaluateExpression(subExpression);
+            data = data.substring(0, startIndex) + subResult + data.substring(endIndex + 1);
+        }
+
+        double finalResult = evaluateExpression(data);
+        return (finalResult % 1 == 0) ? String.valueOf((int) finalResult) : String.valueOf(finalResult);
+    }
+
+    private double evaluateExpression(String expression) {
         double result = 0;
         double currentNumber = 0;
         char operator = '+';
-        double labelulle = 0; // For managing percentages
-        boolean decimalFlag = false; // For decimals
-        int decimalPlace = 1; // To handle decimal places
-        boolean isNegative = false; // For negative numbers
+        boolean decimalFlag = false;
+        int decimalPlace = 1;
+        boolean isNegative = false;
 
-        for (int i = 0; i < data.length(); i++) {
-            char current = data.charAt(i);
+        for (int i = 0; i < expression.length(); i++) {
+            char current = expression.charAt(i);
 
-            // Handling digits
             if (Character.isDigit(current)) {
                 if (decimalFlag) {
                     currentNumber += (current - '0') / (double) (decimalPlace *= 10);
                 } else {
                     currentNumber = currentNumber * 10 + (current - '0');
                 }
-            }
-
-            // Handle decimal point
-            if (current == '.') {
+            } else if (current == '.') {
                 decimalFlag = true;
-                continue;
-            }
-
-            // Handle negative sign
-            if (current == '-') {
+            } else if (current == '-') {
                 isNegative = true;
-            }
-
-            if (!Character.isDigit(current) && current != ' ' || i == data.length() - 1) {
+            } else if (!Character.isWhitespace(current)) {
                 if (isNegative) {
-                    currentNumber = -currentNumber; // Apply negative sign
-                    isNegative = false; // Reset negative flag
+                    currentNumber = -currentNumber;
+                    isNegative = false;
                 }
-
-                // Perform calculations based on the operator
-                switch (operator) {
-                    case '*':
-                        result *= currentNumber;
-                        break;
-                    case '/':
-                        if (currentNumber != 0) {
-                            result /= currentNumber;
-                        } else {
-                            return "Can't divide by zero";
-                        }
-                        break;
-                    case '+':
-                        result += currentNumber;
-                        break;
-                    case '-':
-                        result -= currentNumber;
-                        break;
-                    case '%':
-                        if (currentNumber > 0) {
-                            result += result * (currentNumber / 100);
-                        }
-                        break;
-                }
-
-                operator = current; // Update operator for next operation
-                currentNumber = 0; // Reset current number
-                decimalFlag = false; // Reset decimal flag
-                decimalPlace = 1; // Reset decimal place counter
+                result = performOperation(result, currentNumber, operator);
+                operator = current;
+                currentNumber = 0;
+                decimalFlag = false;
+                decimalPlace = 1;
             }
         }
 
-        // Finally process any remaining operation
-        switch (operator) {
-            case '*':
-                result *= currentNumber;
-                break;
-            case '/':
-                if (currentNumber != 0) {
-                    result /= currentNumber;
-                } else {
-                    return "Can't divide by zero";
-                }
-                break;
-            case '+':
-                result += currentNumber;
-                break;
-            case '-':
-                result -= currentNumber;
-                break;
-            case '%':
-                if (currentNumber > 0) {
-                    result += result * (currentNumber / 100);
-                }
-                break;
-        }
+        result = performOperation(result, currentNumber, operator);
+        return result;
+    }
 
-        return (result % 1 == 0) ? String.valueOf((int) result) : String.valueOf(result);
+    private double performOperation(double left, double right, char operator) {
+        switch (operator) {
+            case '+':
+                return left + right;
+            case '-':
+                return left - right;
+            case '*':
+                return left * right;
+            case '/':
+                return left / right;
+            case '%':
+                return left * (right / 100);
+            default:
+                return right;
+        }
     }
 }
